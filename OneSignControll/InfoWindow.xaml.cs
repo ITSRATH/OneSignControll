@@ -1,4 +1,6 @@
 ﻿using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
+using OneSignControll.ViewModels;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,61 +10,51 @@ namespace OneSignControll
 {
     public partial class InfoWindow : MetroWindow
     {
-        private readonly string appDataFolder;
-        private readonly string xmlFilePath;
+        #region Variables
+
+        private readonly InfoWindowViewModel viewModel;
+
+        #endregion
+
+        #region Constructor
 
         public InfoWindow()
         {
+            viewModel = new InfoWindowViewModel(DialogCoordinator.Instance);
+
             InitializeComponent();
 
-            // Set the AppData folder path
-            appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OneSignControll");
-            xmlFilePath = Path.Combine(appDataFolder, "programs.xml");
+            DataContext = viewModel;
         }
 
-        private void DestroyButton_Click(object sender, RoutedEventArgs e)
+        #endregion
+
+        #region EventHandlers
+
+        private async void CmdDestroyData_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
-            string message = $"Sind Sie sicher, dass Sie den AppData-Ordner ({appDataFolder}) und die gespeicherte XML-Datei ({xmlFilePath}) löschen möchten? Dies kann nicht rückgängig gemacht werden!";
-            MessageBoxResult result = MessageBox.Show(message, "Bestätigung erforderlich", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+            try
             {
-                try
-                {
-                    // Löschen der XML-Datei
-                    if (File.Exists(xmlFilePath))
-                    {
-                        File.Delete(xmlFilePath);
-                    }
+                string message = $"Sind Sie sicher, dass Sie den AppData-Ordner ({viewModel.XMLFileManager.DefaultXMLDirPath}) und die gespeicherte XML-Datei ({viewModel.XMLFileManager.DefaultXMLFilePath}) löschen möchten? Dies kann nicht rückgängig gemacht werden!";
+                MessageDialogResult dialogResult = await this.ShowMessageAsync("Bestätigung erforderlich", message);
 
-                    // Löschen des gesamten AppData-Ordners
-                    if (Directory.Exists(appDataFolder))
-                    {
-                        Directory.Delete(appDataFolder, true);
-                    }
-
-                    MessageBox.Show("Der AppData-Ordner und die XML-Datei wurden erfolgreich gelöscht.", "Löschen erfolgreich", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
+                if (dialogResult == MessageDialogResult.Affirmative)
                 {
-                    MessageBox.Show($"Fehler beim Löschen: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+                    await viewModel.ResetXMLAsnyc();
+                    await this.ShowMessageAsync("Löschen erfolgreich", "Der AppData-Ordner und die XML-Datei wurden erfolgreich gelöscht und auf die Standardwerte zurückgesetzt");
                 }
+            }
+            catch (Exception ex)
+            {
+                await this.ShowMessageAsync("Fehler", $"Fehler beim Löschen: {ex.Message}");
             }
         }
 
-        private void OpenGitHubLink(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void CmdDestroyData_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("https://github.com/") { UseShellExecute = true });
+            e.CanExecute = true;
         }
 
-        private void OpenLink(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo("https://opensource.org/licenses/MIT") { UseShellExecute = true });
-        }
-
-        private void OpenMahAppsGitHubLink(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo("https://github.com/MahApps/MahApps.Metro/") { UseShellExecute = true });
-        }
+        #endregion
     }
 }

@@ -4,39 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=viewmodels:MainWindowViewModel}"
         
         xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+        dialog:DialogParticipation.Register="{Binding}"
+        xmlns:viewmodels="clr-namespace:OneSignControll.ViewModels"
         
-        Title="OneSignControll" Height="500" Width="900">
+        Title="OneSignControll" Height="500" Width="900" Loaded="MetroWindow_Loaded" Closing="MetroWindow_Closing">
     <mahapps:MetroWindow.Resources>
-        <!-- Stil für Hauptmenüeinträge -->
-        <Style TargetType="MenuItem" x:Key="MainMenuItemStyle" BasedOn="{StaticResource MahApps.Styles.MenuItem}">
-            <!--<Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#005B99"/>
-                </Trigger>
-            </Style.Triggers>-->
-        </Style>
-
-        <!-- Stil für Untermenüeinträge -->
-        <Style TargetType="MenuItem" x:Key="SubMenuItemStyle" BasedOn="{StaticResource MahApps.Styles.MenuItem}">
-            <!--<Setter Property="Foreground" Value="Black"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-            <Setter Property="Padding" Value="5,2"/>
-            <Setter Property="Height" Value="25"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#E5E5E5"/>
-                </Trigger>
-            </Style.Triggers>-->
-        </Style>
+        <Style TargetType="MenuItem" x:Key="MainMenuItemStyle" BasedOn="{StaticResource MahApps.Styles.MenuItem}"/>
+        <Style TargetType="MenuItem" x:Key="SubMenuItemStyle" BasedOn="{StaticResource MahApps.Styles.MenuItem}"/>
+        
         <DataTemplate x:Key="ProgramListItemTemplate">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -47,62 +27,89 @@
                 <TextBlock Grid.Column="1" Text="{Binding Path}"/>
             </Grid>
         </DataTemplate>
+
+        <RoutedUICommand x:Key="CmdAddProgram"/>
+        <RoutedUICommand x:Key="CmdRenameProgram"/>
+        <RoutedUICommand x:Key="CmdRemoveProgram"/>
+        <RoutedUICommand x:Key="Cmd_ReloadXML"/>
+        <RoutedUICommand x:Key="CmdSaveXML"/>
+        <RoutedUICommand x:Key="CmdImportXML"/>
+        <RoutedUICommand x:Key="CmdExportXML"/>
+        <RoutedUICommand x:Key="CmdOpenInfoWindow"/>
+        <RoutedUICommand x:Key="CmdStartProgram"/>
     </mahapps:MetroWindow.Resources>
+    <mahapps:MetroWindow.CommandBindings>
+        <CommandBinding Command="{StaticResource CmdAddProgram}" Executed="CmdAddProgram_Executed" CanExecute="CmdAddProgram_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdRenameProgram}" Executed="CmdRenameProgram_Executed" CanExecute="CmdRenameProgram_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdRemoveProgram}" Executed="CmdRemoveProgram_Executed" CanExecute="CmdRemoveProgram_CanExecute"/>
+        <CommandBinding Command="{StaticResource Cmd_ReloadXML}" Executed="Cmd_ReloadXML_Executed" CanExecute="Cmd_ReloadXML_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdSaveXML}" Executed="CmdSaveXML_Executed" CanExecute="CmdSaveXML_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdImportXML}" Executed="CmdImportXML_Executed" CanExecute="CmdImportXML_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdExportXML}" Executed="CmdExportXML_Executed" CanExecute="CmdExportXML_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdOpenInfoWindow}" Executed="CmdOpenInfoWindow_Executed" CanExecute="CmdOpenInfoWindow_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdStartProgram}" Executed="CmdStartProgram_Executed" CanExecute="CmdStartProgram_CanExecute"/>
+        <CommandBinding Command="ApplicationCommands.Close" Executed="CmdClose_Executed" CanExecute="CmdClose_CanExecute"/>
+    </mahapps:MetroWindow.CommandBindings>
     <mahapps:MetroWindow.LeftWindowCommands>
         <mahapps:WindowCommands>
             <Image Source="pack://application:,,,/OneSign.ico"/>
         </mahapps:WindowCommands>
     </mahapps:MetroWindow.LeftWindowCommands>
+    <mahapps:MetroWindow.RightWindowCommands>
+        <mahapps:WindowCommands>
+            <TextBlock Text="{Binding ProgramVersion, StringFormat='{}Version: {0}'}" VerticalAlignment="Center"/>
+        </mahapps:WindowCommands>
+    </mahapps:MetroWindow.RightWindowCommands>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Datei" Style="{StaticResource MainMenuItemStyle}" ItemContainerStyle="{StaticResource SubMenuItemStyle}">
-                <MenuItem Header="Lade Konfiguration" Click="LoadXML_Click">
+                <MenuItem Header="Konfiguration neu laden" Command="{StaticResource Cmd_ReloadXML}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="FileDocument"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Speicher Konfiguration" Click="SaveXML_Click">
+                <MenuItem Header="Konfiguration speichern" Command="{StaticResource CmdSaveXML}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="ContentSave"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="Importieren" Click="ImportXML_Click">
+                <MenuItem Header="Importieren" Command="{StaticResource CmdImportXML}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Import"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Exportieren" Click="ExportXML_Click">
+                <MenuItem Header="Exportieren" Command="{StaticResource CmdExportXML}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Export"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="Schließen" Click="Exit_Click">
+                <MenuItem Header="Schließen" Command="ApplicationCommands.Close">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Close"/>
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="Programme" Style="{StaticResource MainMenuItemStyle}" ItemContainerStyle="{StaticResource SubMenuItemStyle}">
-                <MenuItem Name="AddProgramMenuItem" Header="Programm hinzufügen" Click="AddProgram_Click">
+                <MenuItem Header="Programm hinzufügen" Command="{StaticResource CmdAddProgram}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Plus"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="RenameProgramMenuItem" Header="Programm umbenennen" Click="RenameProgram_Click">
+                <MenuItem Header="Programm umbenennen"  Command="{StaticResource CmdRenameProgram}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Rename"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="RemoveProgramMenuItem" Header="Programm entfernen" Click="RemoveProgram_Click">
+                <MenuItem Header="Programm entfernen"  Command="{StaticResource CmdRemoveProgram}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Delete"/>
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="Hilfe"  Style="{StaticResource MainMenuItemStyle}" ItemContainerStyle="{StaticResource SubMenuItemStyle}">
-                <MenuItem Header="Info" Click="Info_Click">
+                <MenuItem Header="Info" Command="{StaticResource CmdOpenInfoWindow}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Information"/>
                     </MenuItem.Icon>
@@ -110,15 +117,22 @@
             </MenuItem>
         </Menu>
         <StatusBar DockPanel.Dock="Bottom">
-            <!-- TODO: Bind to ViewModel after implementing MVVM -->
-            <TextBlock Text="{Binding CurrentStatus}"/>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding CurrentStatus}"/>
+                </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding XMLFileManager.CurrentXMLFilePath}"/>
+                </StackPanel>
+            </StatusBarItem>
         </StatusBar>
         <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right" Orientation="Horizontal" Margin="10">
-            <Button Content="Programm starten" Name="StartProgramButton" Width="150" Click="StartProgramButton_Click" IsDefault="True"/>
+            <Button Content="Programm starten" Name="StartProgramButton" Width="150" IsDefault="True" Command="{StaticResource CmdStartProgram}"/>
         </StackPanel>
         <DockPanel Margin="10">
-            <!-- TODO: Bind to ViewModel after implementing MVVM -->
-            <DataGrid Name="ProgramListView" SelectionMode="Extended">
+            <DataGrid Name="ProgramListView" SelectionMode="Extended" ItemsSource="{Binding Programs}" SelectedItem="{Binding SelectedProgramEntry, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Width="300" Header="Programm" Binding="{Binding Name}"/>
                     <DataGridTextColumn Width="*" Header="Pfad" Binding="{Binding Path}"/>

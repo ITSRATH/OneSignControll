@@ -1,10 +1,14 @@
 ﻿using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
+using OneSignControll.Models;
+using OneSignControll.ViewModels;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Web.UI.HtmlControls;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
@@ -13,86 +17,44 @@ namespace OneSignControll
 {
     public partial class MainWindow : MetroWindow
     {
-        private readonly string XmlFilePath;
-        public ObservableCollection<ProgramEntry> Programs { get; set; }
+        #region Variables
+
+        private readonly MainWindowViewModel viewModel;
+
+        #endregion
+
+        #region Constructor
 
         public MainWindow()
         {
+            viewModel = new MainWindowViewModel(DialogCoordinator.Instance);
+
             InitializeComponent();
 
-            // Initialisierung des XML-Dateipfads
-            XmlFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OneSignControll", "OneSignControllSave.xml");
-
-            EnsureDirectoryExists();
-
-            Programs = new ObservableCollection<ProgramEntry>();
-            ProgramListView.ItemsSource = Programs;
-            ProgramListView.SelectionChanged += ProgramListView_SelectionChanged;
-
-            UpdateMenuItemState(); // Initialer Aufruf, um den Zustand der Menüpunkte festzulegen
-            LoadProgramsFromXml(); // Laden der gespeicherten Programme beim Start
+            this.DataContext = viewModel;
         }
 
-        private void EnsureDirectoryExists()
+        #endregion
+
+        #region EventHandlers
+
+        private async void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            string directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OneSignControll");
-            if (!Directory.Exists(directoryPath))
+            await viewModel.InitializeAsync();
+            viewModel.CurrentStatus = "Programm erfolgreich gestartet";
+        }
+
+        private async void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            MessageDialogResult result = await this.ShowMessageAsync("Warnung", "Ungespeicherte Änderungen gehen verloren.", MessageDialogStyle.AffirmativeAndNegative);
+            if (result == MessageDialogResult.Affirmative)
             {
-                Directory.CreateDirectory(directoryPath);
+                Application.Current.Shutdown();
             }
         }
 
-        private void LoadProgramsFromXml()
+        private async void CmdAddProgram_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
-            if (File.Exists(XmlFilePath))
-            {
-                try
-                {
-                    var doc = XDocument.Load(XmlFilePath);
-                    Programs.Clear();
-                    foreach (var programElement in doc.Descendants("Program"))
-                    {
-                        Programs.Add(new ProgramEntry(programElement.Element("Path").Value)
-                        {
-                            Name = programElement.Element("Name")?.Value
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Fehler beim Laden der XML-Datei: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        private void ProgramListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            UpdateMenuItemState();
-        }
-
-        private void UpdateMenuItemState()
-        {
-            int programCount = Programs.Count;
-            int selectedCount = ProgramListView.SelectedItems.Count;
-
-            // Deaktivieren von "Programm entfernen", wenn keine Programme vorhanden sind
-            RemoveProgramMenuItem.IsEnabled = programCount > 0 && selectedCount > 0;
-
-            // Deaktivieren von "Programm umbenennen", wenn kein oder mehrere Programme ausgewählt sind
-            RenameProgramMenuItem.IsEnabled = selectedCount == 1;
-
-            // Deaktivieren von "Programm hinzufügen", wenn mehrere Programme ausgewählt sind
-            AddProgramMenuItem.IsEnabled = selectedCount <= 1;
-        }
-
-        private void AddProgram_Click(object sender, RoutedEventArgs e)
-        {
-            if (ProgramListView.SelectedItems.Count > 1)
-            {
-                MessageBox.Show("Sie können nur ein Programm auf einmal hinzufügen.", "Mehrfachauswahl", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
             var openFileDialog = new OpenFileDialog
             {
                 Title = "Programm auswählen",
@@ -102,138 +64,127 @@ namespace OneSignControll
             if (openFileDialog.ShowDialog() == true)
             {
                 string selectedPath = openFileDialog.FileName;
-                string defaultName = System.IO.Path.GetFileNameWithoutExtension(selectedPath);
+                string programName = System.IO.Path.GetFileNameWithoutExtension(selectedPath);
 
-                var inputDialog = new InputDialog("Programm umbenennen", "Geben Sie einen neuen Namen ein:", defaultName);
-                if (inputDialog.ShowDialog() == true)
+                MetroDialogSettings dialogSettings = new MetroDialogSettings()
                 {
-                    Programs.Add(new ProgramEntry(selectedPath) { Name = inputDialog.ResponseText });
-                }
-                else
-                {
-                    Programs.Add(new ProgramEntry(selectedPath));
-                }
+                    DefaultText = programName
+                };
 
-                UpdateMenuItemState(); // Aktualisieren des Zustands nach dem Hinzufügen eines Programms
+                var inputResult = await this.ShowInputAsync("Programm umbenennen", "Geben Sie einen neuen Namen ein:", dialogSettings);
+                if (String.IsNullOrWhiteSpace(inputResult) == false)
+                {
+                    viewModel.AddProgram(inputResult, selectedPath);
+                    viewModel.CurrentStatus = $"Programm '{inputResult}' hinzugefügt";
+                }
             }
         }
 
-        private void RenameProgram_Click(object sender, RoutedEventArgs e)
+        private void CmdAddProgram_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
-            if (ProgramListView.SelectedItems.Count > 1)
+            if (viewModel != null)
             {
-                MessageBox.Show("Sie können nur ein Programm auf einmal umbenennen.", "Mehrfachauswahl", MessageBoxButton.OK, MessageBoxImage.Information);
+                e.CanExecute = true;
+            }
+        }
+
+        private async void CmdRenameProgram_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            string oldName = viewModel.SelectedProgramEntry.Name;
+
+            MetroDialogSettings dialogSettings = new MetroDialogSettings()
+            {
+                DefaultText = oldName
+            };
+
+            var inputResult = await this.ShowInputAsync("Programm umbenennen", "Geben Sie einen neuen Namen ein:", dialogSettings);
+            if (String.IsNullOrWhiteSpace(inputResult) == false)
+            {
+                viewModel.RenameProgram(viewModel.SelectedProgramEntry, inputResult);
+                viewModel.CurrentStatus = $"Programm '{oldName}' umbenannt zu '{viewModel.SelectedProgramEntry.Name}'";
+            }
+        }
+
+        private void CmdRenameProgram_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            if (viewModel != null && ProgramListView.SelectedItems.Count == 1)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private void CmdRemoveProgram_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            var selectedPrograms = ProgramListView.SelectedItems;
+            var programsToRemove = selectedPrograms.Cast<ProgramEntry>().ToList();
+
+            foreach (var program in programsToRemove)
+            {
+                viewModel.RemoveProgram(program);
+            }
+        }
+
+        private void CmdRemoveProgram_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            if (viewModel != null && viewModel.SelectedProgramEntry != null)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private async void Cmd_ReloadXML_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            MessageDialogResult result = await this.ShowMessageAsync("Warnung", "Ungespeicherte Änderungen gehen verloren.", MessageDialogStyle.AffirmativeAndNegative);
+            if (result == MessageDialogResult.Affirmative)
+            {
+                await viewModel.LoadXMLAsync(viewModel.XMLFileManager.CurrentXMLFilePath);
+                viewModel.CurrentStatus = "Konfiguration erfolgreich geladen";
+            }
+        }
+
+        private void Cmd_ReloadXML_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            if (viewModel != null && viewModel.XMLFileManager.CurrentXMLFilePath != null)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private async void CmdSaveXML_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            MetroDialogSettings metroDialogSettings = new MetroDialogSettings()
+            {
+                AffirmativeButtonText = "Ja",
+                NegativeButtonText = "Nein",
+                FirstAuxiliaryButtonText = "Abbrechen",
+            };
+
+            MessageDialogResult result = await this.ShowMessageAsync("Warnung", "Möchten Sie die Standardwerte mit dieser Konfiguration überschreiben?", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, metroDialogSettings);
+            if (result == MessageDialogResult.Affirmative)
+            {
+                await viewModel.SaveXMLAsync(true);
+                viewModel.CurrentStatus = "Standardkonfiguration erfolgreich überschrieben";
+            }
+            else if (result == MessageDialogResult.Negative)
+            {
+                await viewModel.SaveXMLAsync(false);
+                viewModel.CurrentStatus = "Konfiguration erfolgreich gespeichert";
+            }
+            else
+            {
                 return;
             }
-
-            if (ProgramListView.SelectedItem is ProgramEntry selectedProgram)
-            {
-                var inputDialog = new InputDialog("Programm umbenennen", "Geben Sie einen neuen Namen ein:", selectedProgram.Name);
-                if (inputDialog.ShowDialog() == true)
-                {
-                    selectedProgram.Name = inputDialog.ResponseText;
-                    ProgramListView.Items.Refresh(); // Aktualisieren der ListView
-                }
-            }
-            else
-            {
-                MessageBox.Show("Bitte wählen Sie ein Programm zum Umbenennen aus.");
-            }
         }
 
-        private void RemoveProgram_Click(object sender, RoutedEventArgs e)
+        private void CmdSaveXML_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
-            var selectedPrograms = ProgramListView.SelectedItems;
-            if (selectedPrograms.Count > 0)
+            if (viewModel != null)
             {
-                var programsToRemove = selectedPrograms.Cast<ProgramEntry>().ToList();
-
-                foreach (var program in programsToRemove)
-                {
-                    Programs.Remove(program);
-                }
-
-                UpdateMenuItemState(); // Aktualisieren des Zustands nach dem Entfernen eines Programms
-            }
-            else
-            {
-                MessageBox.Show("Bitte wählen Sie ein oder mehrere Programme zum Entfernen aus.");
+                e.CanExecute = true;
             }
         }
 
-        private void StartProgramButton_Click(object sender, RoutedEventArgs e)
-        {
-            var selectedPrograms = ProgramListView.SelectedItems;
-            if (selectedPrograms.Count > 0)
-            {
-                foreach (ProgramEntry program in selectedPrograms)
-                {
-                    try
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = program.Path,
-                            UseShellExecute = true,
-                            Verb = "runas" // Ensure it runs with administrator rights
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Fehler beim Starten des Programms: {ex.Message}");
-                    }
-                }
-            }
-            else
-            {
-                MessageBox.Show("Bitte wählen Sie ein oder mehrere Programme zum Starten aus.");
-            }
-        }
-
-        private void LoadXML_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var doc = XDocument.Load(XmlFilePath);
-                Programs.Clear();
-                foreach (var programElement in doc.Descendants("Program"))
-                {
-                    Programs.Add(new ProgramEntry(programElement.Element("Path").Value)
-                    {
-                        Name = programElement.Element("Name")?.Value
-                    });
-                }
-
-                UpdateMenuItemState(); // Aktualisieren des Zustands nach dem Laden der Konfiguration
-
-                MessageBox.Show("Konfiguration erfolgreich geladen.", "Laden", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Fehler beim Laden der XML-Datei: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SaveXML_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var doc = new XDocument(new XElement("Programs",
-                    Programs.Select(p => new XElement("Program",
-                        new XElement("Path", p.Path),
-                        new XElement("Name", p.Name)
-                    ))
-                ));
-
-                doc.Save(XmlFilePath);
-                MessageBox.Show("Konfiguration erfolgreich gespeichert.", "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Fehler beim Speichern der XML-Datei: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void ImportXML_Click(object sender, RoutedEventArgs e)
+        private async void CmdImportXML_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             var openFileDialog = new OpenFileDialog
             {
@@ -245,38 +196,41 @@ namespace OneSignControll
             {
                 try
                 {
-                    var doc = XDocument.Load(openFileDialog.FileName);
-
-                    Programs.Clear();
-                    foreach (var programElement in doc.Descendants("Program"))
+                    MetroDialogSettings metroDialogSettings = new MetroDialogSettings()
                     {
-                        Programs.Add(new ProgramEntry(programElement.Element("Path").Value)
-                        {
-                            Name = programElement.Element("Name")?.Value
-                        });
+                        AffirmativeButtonText = "Ja",
+                        NegativeButtonText = "Nein",
+                        FirstAuxiliaryButtonText = "Abbrechen",
+                    };
+
+                    MessageDialogResult result = await this.ShowMessageAsync("Warnung", "Möchten Sie die Standardwerte mit dieser Konfiguration überschreiben?", MessageDialogStyle.AffirmativeAndNegativeAndSingleAuxiliary, metroDialogSettings);
+                    if (result == MessageDialogResult.Affirmative)
+                    {
+                        await viewModel.ImportXMLAsync(openFileDialog.FileName, true);
+                        viewModel.CurrentStatus = "Konfiguration erfolgreich geladen und Standardkonfiguration überschrieben";
                     }
-
-                    UpdateMenuItemState(); // Aktualisieren des Zustands nach dem Importieren der Konfiguration
-
-                    MessageBox.Show("Konfiguration erfolgreich importiert.", "Importieren", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // Abfrage, ob die importierte Konfiguration im AppData-Ordner gespeichert werden soll
-                    var saveConfirmation = MessageBox.Show("Möchten Sie die importierte Konfiguration im AppData-Ordner speichern?", "Speichern bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (saveConfirmation == MessageBoxResult.Yes)
+                    else if (result == MessageDialogResult.Negative)
                     {
-                        // Speichern der importierten Konfiguration im AppData-Ordner
-                        doc.Save(XmlFilePath);
-                        MessageBox.Show("Konfiguration wurde im AppData-Ordner gespeichert.", "Gespeichert", MessageBoxButton.OK, MessageBoxImage.Information);
+                        await viewModel.ImportXMLAsync(openFileDialog.FileName, false);
+                        viewModel.CurrentStatus = "Konfiguration erfolgreich geladen";
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Fehler beim Importieren der XML-Datei: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+                    await this.ShowMessageAsync("Warnung", $"Fehler beim Importieren der XML-Datei: {ex.Message}");
                 }
             }
         }
 
-        private void ExportXML_Click(object sender, RoutedEventArgs e)
+        private void CmdImportXML_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private async void CmdExportXML_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             var saveFileDialog = new SaveFileDialog
             {
@@ -289,72 +243,71 @@ namespace OneSignControll
             {
                 try
                 {
-                    var doc = new XDocument(new XElement("Programs",
-                        Programs.Select(p => new XElement("Program",
-                            new XElement("Path", p.Path),
-                            new XElement("Name", p.Name)
-                        ))
-                    ));
-
-                    doc.Save(saveFileDialog.FileName);
-                    MessageBox.Show("Konfiguration erfolgreich exportiert.", "Exportieren", MessageBoxButton.OK, MessageBoxImage.Information);
+                    await viewModel.SaveXMLAsync(false, saveFileDialog.FileName);
+                    viewModel.CurrentStatus = "Konfiguration erfolgreich exportiert";
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Fehler beim Exportieren der XML-Datei: {ex.Message}", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+                    await this.ShowMessageAsync("Fehler", $"Fehler beim Exportieren der XML-Datei: {ex.Message}");
                 }
             }
         }
 
-        private void Exit_Click(object sender, RoutedEventArgs e)
+        private void CmdExportXML_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
-            Application.Current.Shutdown(); // Schließt die Anwendung
+            if (viewModel != null && viewModel.XMLFileManager.CurrentXMLFilePath != null)
+            {
+                e.CanExecute = true;
+            }
         }
 
-        private void Info_Click(object sender, RoutedEventArgs e)
+        private async void CmdClose_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            MessageDialogResult result = await this.ShowMessageAsync("Warnung", "Ungespeicherte Änderungen gehen verloren.", MessageDialogStyle.AffirmativeAndNegative);
+            if (result == MessageDialogResult.Affirmative)
+            {
+                Application.Current.Shutdown();
+            }
+        }
+
+        private void CmdClose_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void CmdOpenInfoWindow_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             InfoWindow infoWindow = new InfoWindow();
             infoWindow.ShowDialog();
         }
-    }
 
-    public class ProgramEntry
-    {
-        public string Path { get; set; }
-        public string Name { get; set; }
-
-        public ProgramEntry(string path)
+        private void CmdOpenInfoWindow_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
-            Path = path;
-            Name = System.IO.Path.GetFileNameWithoutExtension(path); // Extrahiert den Anwendungsnamen ohne Erweiterung
+            e.CanExecute = true;
         }
-    }
 
-    public class InputDialog : Window
-    {
-        private readonly TextBox inputBox;
-        public string ResponseText { get; private set; }
-
-        public InputDialog(string title, string message, string defaultText = "")
+        private async void CmdStartProgram_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
-            Title = title;
-            WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            Width = 300;
-            Height = 150;
-            ResizeMode = ResizeMode.NoResize;
-            WindowStyle = WindowStyle.ToolWindow;
-
-            StackPanel panel = new StackPanel { Margin = new Thickness(10) };
-            panel.Children.Add(new TextBlock { Text = message });
-
-            inputBox = new TextBox { Text = defaultText, Margin = new Thickness(0, 10, 0, 10) };
-            panel.Children.Add(inputBox);
-
-            Button okButton = new Button { Content = "OK", Width = 80, IsDefault = true };
-            okButton.Click += (s, e) => { ResponseText = inputBox.Text; DialogResult = true; Close(); };
-            panel.Children.Add(okButton);
-
-            Content = panel;
+            try
+            {
+                viewModel.CurrentStatus = $"Programm wird gestartet...";
+                viewModel.RunSelectedProgram();
+                viewModel.CurrentStatus = "Programm erfolgreich gestartet";
+            }
+            catch (Exception ex)
+            {
+                await this.ShowMessageAsync("Warnung", $"Fehler beim Starten des Programms: {ex.Message}", MessageDialogStyle.AffirmativeAndNegative);
+            }
         }
+
+        private void CmdStartProgram_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            if (viewModel != null && ProgramListView != null && ProgramListView.SelectedItems.Count == 1)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        #endregion
     }
 }

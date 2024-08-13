@@ -5,62 +5,75 @@
         xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                      
-        Title="Über OneSignControll" Height="Auto" Width="Auto" SizeToContent="WidthAndHeight"
+        Title="Über OneSignControll" Height="Auto" Width="600" SizeToContent="Height"
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow">
+    <mahapps:MetroWindow.Resources>
+        <RoutedUICommand x:Key="CmdDestroyData"/>
+    </mahapps:MetroWindow.Resources>
+    <mahapps:MetroWindow.CommandBindings>
+        <CommandBinding Command="{StaticResource CmdDestroyData}" Executed="CmdDestroyData_Executed" CanExecute="CmdDestroyData_CanExecute"/>
+    </mahapps:MetroWindow.CommandBindings>
     <mahapps:MetroWindow.LeftWindowCommands>
         <mahapps:WindowCommands>
             <iconPacks:PackIconMaterial Kind="Information"/>
         </mahapps:WindowCommands>
     </mahapps:MetroWindow.LeftWindowCommands>
-    <DockPanel Margin="20">
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center">
-            <!-- Zerstören-Button -->
-            <Button Content="Destroy"
-                    FontWeight="Bold"
-                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                    Margin="0,20,0,10" Cursor="Hand"
-                    Click="DestroyButton_Click">
-                <Button.Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button.Flat}">
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="False">
-                                <Setter Property="Background" Value="#FF4500"/>
-                                <Setter Property="BorderBrush" Value="DarkRed"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#FF4500"/>
-                                <Setter Property="BorderBrush" Value="DarkRed"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#FF0000"/>
-                            </Trigger>
-                        </Style.Triggers>
-                        <Setter Property="Effect">
-                            <Setter.Value>
-                                <DropShadowEffect ShadowDepth="4" BlurRadius="10" Opacity="0.6"/>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Button.Style>
-            </Button>
-        </StackPanel>
-        <StackPanel>
-            <TextBlock Text="OneSignControll" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-            <TextBlock Text="Version 1.0.0" FontSize="14" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
 
-            <TextBlock Text="Entwickelt von:" FontSize="16" FontWeight="Bold" Margin="0,10,0,5"/>
-            <TextBlock Text="Patrick Rath (IT Solutions Rath)" FontSize="14" Margin="0,0,0,20"/>
+            </StatusBarItem>
+        </StatusBar>
+        <DockPanel Margin="20">
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center">
+                <!-- Zerstören-Button -->
+                <Button Content="Destroy" FontWeight="Bold" Command="{StaticResource CmdDestroyData}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button.Flat}">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="False">
+                                    <Setter Property="Background" Value="#FF4500"/>
+                                    <Setter Property="BorderBrush" Value="DarkRed"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#FF4500"/>
+                                    <Setter Property="BorderBrush" Value="DarkRed"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Background" Value="#FF0000"/>
+                                </Trigger>
+                            </Style.Triggers>
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect ShadowDepth="4" BlurRadius="10" Opacity="0.6"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="OneSignControll" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                <TextBlock Text="Version 1.0.0" FontSize="14" Margin="0,0,0,20" HorizontalAlignment="Center"/>
 
-            <TextBlock Text="Lizenzinformationen:" FontSize="16" FontWeight="Bold" Margin="0,10,0,5"/>
-            <TextBlock Text="Diese Software ist lizenziert unter der MIT-Lizenz." FontSize="14" TextWrapping="Wrap"/>
-            <TextBlock Text="Weitere Informationen finden Sie unter:" FontSize="14"/>
-            <TextBlock Text="https://opensource.org/licenses/MIT" FontSize="14" Foreground="Blue" Cursor="Hand" MouseDown="OpenLink" Margin="0,0,0,20"/>
+                <TextBlock Text="Entwickelt von:" FontSize="16" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="Patrick Rath (IT Solutions Rath)" FontSize="14" Margin="0,0,0,20"/>
 
-            <TextBlock Text="UI Framework: MahApps.Metro" FontSize="14"/>
-            <TextBlock Text="https://github.com/MahApps/MahApps.Metro/" FontSize="14" Foreground="Blue" Cursor="Hand" MouseDown="OpenMahAppsGitHubLink" Margin="0,0,0,20"/>
-            <!-- Link zu GitHub -->
-            <TextBlock Text="Verwendetes Icon von GitHub:" FontSize="14"/>
-            <TextBlock Text="https://github.com" FontSize="14" Foreground="Blue" Cursor="Hand" MouseDown="OpenGitHubLink"/>
-        </StackPanel>
+                <TextBlock Text="Lizenzinformationen:" FontSize="16" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="Diese Software ist lizenziert unter der MIT-Lizenz." FontSize="14" TextWrapping="Wrap"/>
+                <TextBlock Text="" FontSize="14">
+    Weitere Informationen finden Sie unter:<LineBreak/>
+    <Hyperlink>https://opensource.org/licenses/MIT</Hyperlink><LineBreak/>
+                </TextBlock>
+                <TextBlock Text="" FontSize="14">
+    UI Framework: MahApps.Metro<LineBreak/>
+    <Hyperlink>https://github.com/MahApps/MahApps.Metro/</Hyperlink><LineBreak/>
+                </TextBlock>
+                <TextBlock Text="" FontSize="14">
+    Verwendetes Icon von GitHub:<LineBreak/>
+    <Hyperlink>https://github.com</Hyperlink><LineBreak/>
+                </TextBlock>
+            </StackPanel>
+        </DockPanel>
     </DockPanel>
 </mahapps:MetroWindow>
