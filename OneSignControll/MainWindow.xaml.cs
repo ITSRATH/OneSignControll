@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using MahApps.Metro.Controls;
+using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -10,7 +11,7 @@ using System.Xml.Linq;
 
 namespace OneSignControll
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow
     {
         private readonly string XmlFilePath;
         public ObservableCollection<ProgramEntry> Programs { get; set; }

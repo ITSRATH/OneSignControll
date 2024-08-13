@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MahApps.Metro.Controls;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
 
 namespace OneSignControll
 {
-    public partial class InfoWindow : Window
+    public partial class InfoWindow : MetroWindow
     {
         private readonly string appDataFolder;
         private readonly string xmlFilePath;
@@ -57,6 +58,11 @@ namespace OneSignControll
         private void OpenLink(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             Process.Start(new ProcessStartInfo("https://opensource.org/licenses/MIT") { UseShellExecute = true });
+        }
+
+        private void OpenMahAppsGitHubLink(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("https://github.com/MahApps/MahApps.Metro/") { UseShellExecute = true });
         }
     }
 }
