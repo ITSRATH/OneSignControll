@@ -48,7 +48,7 @@ namespace OneSignControll.Managers
         {
             if (File.Exists(filePath))
             {
-                var doc = XDocument.Load(filePath);
+                var doc = await Task.Run(() => XDocument.Load(filePath));
                 Programs.Clear();
                 foreach (var programElement in doc.Descendants("Program"))
                 {
