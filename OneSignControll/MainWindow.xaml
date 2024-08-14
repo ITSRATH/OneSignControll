@@ -132,7 +132,7 @@
             <Button Content="Programm starten" Name="StartProgramButton" Width="150" IsDefault="True" Command="{StaticResource CmdStartProgram}"/>
         </StackPanel>
         <DockPanel Margin="10">
-            <DataGrid Name="ProgramListView" SelectionMode="Extended" ItemsSource="{Binding Programs}" SelectedItem="{Binding SelectedProgramEntry, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
+            <DataGrid Name="ProgramListView" SelectionMode="Extended" IsReadOnly="True" ItemsSource="{Binding Programs}" SelectedItem="{Binding SelectedProgramEntry, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Width="300" Header="Programm" Binding="{Binding Name}"/>
                     <DataGridTextColumn Width="*" Header="Pfad" Binding="{Binding Path}"/>
