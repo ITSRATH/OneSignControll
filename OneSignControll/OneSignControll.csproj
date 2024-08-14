@@ -266,8 +266,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Manager\ManagerBase.cs" />
-    <Compile Include="Manager\XMLFileManager.cs" />
+    <Compile Include="Managers\ManagerBase.cs" />
+    <Compile Include="Managers\XMLFileManager.cs" />
     <Compile Include="Models\ProgramEntry.cs" />
     <Compile Include="Models\ModelBase.cs" />
     <Compile Include="ViewModels\InfoWindowViewModel.cs" />

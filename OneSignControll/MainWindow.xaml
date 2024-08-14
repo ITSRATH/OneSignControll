@@ -11,6 +11,7 @@
         xmlns:dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
         dialog:DialogParticipation.Register="{Binding}"
         xmlns:viewmodels="clr-namespace:OneSignControll.ViewModels"
+        xmlns:managers="clr-namespace:OneSignControll.Managers"
         
         Title="OneSignControll" Height="500" Width="900" Loaded="MetroWindow_Loaded" Closing="MetroWindow_Closing">
     <mahapps:MetroWindow.Resources>
@@ -28,10 +29,12 @@
             </Grid>
         </DataTemplate>
 
+        <CollectionViewSource x:Key="CvsPrograms" Source="{Binding Programs, Source={x:Static managers:XMLFileManager.Instance}, UpdateSourceTrigger=PropertyChanged}"/>
+
         <RoutedUICommand x:Key="CmdAddProgram"/>
         <RoutedUICommand x:Key="CmdRenameProgram"/>
         <RoutedUICommand x:Key="CmdRemoveProgram"/>
-        <RoutedUICommand x:Key="Cmd_ReloadXML"/>
+        <RoutedUICommand x:Key="CmdReloadXML"/>
         <RoutedUICommand x:Key="CmdSaveXML"/>
         <RoutedUICommand x:Key="CmdImportXML"/>
         <RoutedUICommand x:Key="CmdExportXML"/>
@@ -42,7 +45,7 @@
         <CommandBinding Command="{StaticResource CmdAddProgram}" Executed="CmdAddProgram_Executed" CanExecute="CmdAddProgram_CanExecute"/>
         <CommandBinding Command="{StaticResource CmdRenameProgram}" Executed="CmdRenameProgram_Executed" CanExecute="CmdRenameProgram_CanExecute"/>
         <CommandBinding Command="{StaticResource CmdRemoveProgram}" Executed="CmdRemoveProgram_Executed" CanExecute="CmdRemoveProgram_CanExecute"/>
-        <CommandBinding Command="{StaticResource Cmd_ReloadXML}" Executed="Cmd_ReloadXML_Executed" CanExecute="Cmd_ReloadXML_CanExecute"/>
+        <CommandBinding Command="{StaticResource CmdReloadXML}" Executed="Cmd_ReloadXML_Executed" CanExecute="Cmd_ReloadXML_CanExecute"/>
         <CommandBinding Command="{StaticResource CmdSaveXML}" Executed="CmdSaveXML_Executed" CanExecute="CmdSaveXML_CanExecute"/>
         <CommandBinding Command="{StaticResource CmdImportXML}" Executed="CmdImportXML_Executed" CanExecute="CmdImportXML_CanExecute"/>
         <CommandBinding Command="{StaticResource CmdExportXML}" Executed="CmdExportXML_Executed" CanExecute="CmdExportXML_CanExecute"/>
@@ -63,7 +66,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Datei" Style="{StaticResource MainMenuItemStyle}" ItemContainerStyle="{StaticResource SubMenuItemStyle}">
-                <MenuItem Header="Konfiguration neu laden" Command="{StaticResource Cmd_ReloadXML}">
+                <MenuItem Header="Konfiguration neu laden" Command="{StaticResource CmdReloadXML}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="FileDocument"/>
                     </MenuItem.Icon>
@@ -132,7 +135,7 @@
             <Button Content="Programm starten" Name="StartProgramButton" Width="150" IsDefault="True" Command="{StaticResource CmdStartProgram}"/>
         </StackPanel>
         <DockPanel Margin="10">
-            <DataGrid Name="ProgramListView" SelectionMode="Extended" IsReadOnly="True" ItemsSource="{Binding Programs}" SelectedItem="{Binding SelectedProgramEntry, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
+            <DataGrid Name="ProgramListView" SelectionMode="Extended" IsReadOnly="True" ItemsSource="{Binding Path=Programs, Source={x:Static managers:XMLFileManager.Instance}}" SelectedItem="{Binding SelectedProgramEntry, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Width="300" Header="Programm" Binding="{Binding Name}"/>
                     <DataGridTextColumn Width="*" Header="Pfad" Binding="{Binding Path}"/>

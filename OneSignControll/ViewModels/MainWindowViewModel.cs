@@ -1,6 +1,6 @@
 ﻿using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
-using OneSignControll.Manager;
+using OneSignControll.Managers;
 using OneSignControll.Models;
 using System;
 using System.Collections.Generic;
@@ -21,8 +21,6 @@ namespace OneSignControll.ViewModels
     {
         #region Variables
 
-        private readonly XMLFileManager xmlFileManager = new XMLFileManager();
-
         #endregion
 
         #region Constructor
@@ -36,44 +34,35 @@ namespace OneSignControll.ViewModels
 
         #region Public Properties
 
-        public ObservableCollection<ProgramEntry> Programs { get; set; } = new ObservableCollection<ProgramEntry>();
-
         public ProgramEntry SelectedProgramEntry { get; set; }
 
         public string CurrentStatus { get; set; } = "";
 
         public string ProgramVersion { get; set; }
 
-        public XMLFileManager XMLFileManager => xmlFileManager;
+        public XMLFileManager XMLFileManager => XMLFileManager.Instance;
 
         #endregion
 
         #region Public Methods
 
-        public async Task InitializeAsync()
+        public async Task<bool> InitializeAsync()
         {
-            await xmlFileManager.InitializeAsync();
+            await XMLFileManager.InitializeAsync();
             
-            await LoadXMLAsync(xmlFileManager.DefaultXMLFilePath);
+            return await LoadXMLAsync(XMLFileManager.DefaultXMLFilePath);
         }
 
-        public async Task LoadXMLAsync(string filePath)
+        public async Task<bool> LoadXMLAsync(string filePath)
         {
             try
             {
-                try
-                {
-                    var programs = await xmlFileManager.ReadXMLAsync(filePath);
-                    Programs = new ObservableCollection<ProgramEntry>(programs);
-                }
-                catch (Exception ex)
-                {
-                    await DialogCoordinator.ShowMessageAsync(this, "Fehler", $"Fehler beim Laden der XML-Datei: {ex.Message}");
-                }
+                return await XMLFileManager.ReadXMLAsync(filePath);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await DialogCoordinator.ShowMessageAsync(this, "Fehler", "Fehler beim Laden der XML-Datei. Die Datei existiert nicht.");
+                await DialogCoordinator.ShowMessageAsync(this, "Fehler", $"Fehler beim Laden der XML-Datei: {ex.Message}");
+                return false;
             }
         }
 
@@ -81,7 +70,7 @@ namespace OneSignControll.ViewModels
         {
             try
             {
-                return await xmlFileManager.WriteXMLAsync(Programs.ToList(), overwriteDefault, overrideFileName);
+                return await XMLFileManager.WriteXMLAsync(overwriteDefault, overrideFileName);
             }
             catch (Exception ex)
             {
@@ -94,12 +83,7 @@ namespace OneSignControll.ViewModels
         {
             try
             {
-                await LoadXMLAsync(filePath);
-                if(overwriteDefault)
-                {
-                    return await SaveXMLAsync(true);
-                }
-                return true;
+                return await XMLFileManager.ImportXMLAsync(filePath, overwriteDefault);
             }
             catch (Exception ex)
             {
@@ -108,19 +92,40 @@ namespace OneSignControll.ViewModels
             }            
         }
 
-        public void AddProgram(string name, string filePath)
+        public async Task AddProgramAsync(string name, string filePath)
         {
-            Programs.Add(new ProgramEntry(filePath) { Name = name });
+            try
+            {
+                XMLFileManager.AddProgram(name, filePath);
+            }
+            catch (Exception ex)
+            {
+                await DialogCoordinator.ShowMessageAsync(this, "Fehler", $"Fehler beim Hinzufügen des Programms: {ex.Message}");
+            }
         }
 
-        public void RenameProgram(ProgramEntry entry, string newName)
+        public async Task RenameProgramAsync(ProgramEntry entry, string newName)
         {
-            entry.Name = newName;
+            try
+            {
+                XMLFileManager.RenameProgram(entry, newName);
+            }
+            catch (Exception ex)
+            {
+                await DialogCoordinator.ShowMessageAsync(this, "Fehler", $"Fehler beim Umbenennen des Programms: {ex.Message}");
+            }
         }
 
-        public void RemoveProgram(ProgramEntry entry)
+        public async Task RemoveProgramAsync(ProgramEntry entry)
         {
-            Programs.Remove(entry);
+            try
+            {
+                XMLFileManager.RemoveProgram(entry);
+            }
+            catch (Exception ex)
+            {
+                await DialogCoordinator.ShowMessageAsync(this, "Fehler", $"Fehler beim Entfernen des Programms: {ex.Message}");
+            }
         }
 
         public void RunSelectedProgram()

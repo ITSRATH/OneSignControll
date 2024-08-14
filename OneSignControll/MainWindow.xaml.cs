@@ -74,7 +74,7 @@ namespace OneSignControll
                 var inputResult = await this.ShowInputAsync("Programm umbenennen", "Geben Sie einen neuen Namen ein:", dialogSettings);
                 if (String.IsNullOrWhiteSpace(inputResult) == false)
                 {
-                    viewModel.AddProgram(inputResult, selectedPath);
+                    await viewModel.AddProgramAsync(inputResult, selectedPath);
                     viewModel.CurrentStatus = $"Programm '{inputResult}' hinzugefügt";
                 }
             }
@@ -100,7 +100,7 @@ namespace OneSignControll
             var inputResult = await this.ShowInputAsync("Programm umbenennen", "Geben Sie einen neuen Namen ein:", dialogSettings);
             if (String.IsNullOrWhiteSpace(inputResult) == false)
             {
-                viewModel.RenameProgram(viewModel.SelectedProgramEntry, inputResult);
+                await viewModel.RenameProgramAsync(viewModel.SelectedProgramEntry, inputResult);
                 viewModel.CurrentStatus = $"Programm '{oldName}' umbenannt zu '{viewModel.SelectedProgramEntry.Name}'";
             }
         }
@@ -113,14 +113,14 @@ namespace OneSignControll
             }
         }
 
-        private void CmdRemoveProgram_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        private async void CmdRemoveProgram_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             var selectedPrograms = ProgramListView.SelectedItems;
             var programsToRemove = selectedPrograms.Cast<ProgramEntry>().ToList();
 
             foreach (var program in programsToRemove)
             {
-                viewModel.RemoveProgram(program);
+                await viewModel.RemoveProgramAsync(program);
             }
         }
 

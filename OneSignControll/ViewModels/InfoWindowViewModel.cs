@@ -1,5 +1,5 @@
 ﻿using MahApps.Metro.Controls.Dialogs;
-using OneSignControll.Manager;
+using OneSignControll.Managers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +12,6 @@ namespace OneSignControll.ViewModels
     public class InfoWindowViewModel : ViewModelBase
     {
         #region Variables
-
-        private readonly XMLFileManager xmlFileManager = new XMLFileManager();
 
         #endregion
 
@@ -28,7 +26,7 @@ namespace OneSignControll.ViewModels
 
         #region Public Properties
 
-        public XMLFileManager XMLFileManager => xmlFileManager;
+        public XMLFileManager XMLFileManager => XMLFileManager.Instance;
 
         #endregion
 
@@ -36,7 +34,7 @@ namespace OneSignControll.ViewModels
 
         public async Task ResetXMLAsnyc()
         {
-            await xmlFileManager.ResetXMLFileAsync();
+            await XMLFileManager.ResetXMLFileAsync();
         }
 
         #endregion
