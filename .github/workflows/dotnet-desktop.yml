@@ -57,7 +57,7 @@ jobs:
 
     env:
       Solution_Name: OneSignControll.sln                         # Replace with your solution name, i.e. MyWpfApp.sln.
-      Test_Project_Path: OneSignControll\OneSignControll.sln                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
+      Test_Project_Path: OneSignControll\OneSignControll.csproj                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
     steps:
     - name: Checkout
       uses: actions/checkout@v4
