@@ -57,7 +57,7 @@
     </mahapps:MetroWindow.LeftWindowCommands>
     <mahapps:MetroWindow.RightWindowCommands>
         <mahapps:WindowCommands>
-            <TextBlock Text="{Binding ProgramVersion, StringFormat='{}Version: {0}'}" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding ProgramVersion, StringFormat='{}Version: {0} '}" VerticalAlignment="Center"/>
         </mahapps:WindowCommands>
     </mahapps:MetroWindow.RightWindowCommands>
     <DockPanel>
@@ -85,6 +85,11 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
+                <MenuItem Header="Info" Command="{StaticResource CmdOpenInfoWindow}">
+                    <MenuItem.Icon>
+                        <iconPacks:PackIconMaterial Kind="Information"/>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <MenuItem Header="Schließen" Command="ApplicationCommands.Close">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Close"/>
@@ -108,13 +113,13 @@
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Hilfe"  Style="{StaticResource MainMenuItemStyle}" ItemContainerStyle="{StaticResource SubMenuItemStyle}">
+            <!--<MenuItem Header="Hilfe"  Style="{StaticResource MainMenuItemStyle}" ItemContainerStyle="{StaticResource SubMenuItemStyle}">
                 <MenuItem Header="Info" Command="{StaticResource CmdOpenInfoWindow}">
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Information"/>
                     </MenuItem.Icon>
                 </MenuItem>
-            </MenuItem>
+            </MenuItem>-->
         </Menu>
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>

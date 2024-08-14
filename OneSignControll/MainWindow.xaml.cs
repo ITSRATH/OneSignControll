@@ -5,9 +5,11 @@ using OneSignControll.Models;
 using OneSignControll.ViewModels;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Web.UI.HtmlControls;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,10 +40,33 @@ namespace OneSignControll
 
         #region EventHandlers
 
+        private static readonly FieldInfo _menuDropAlignmentField;
+        static MainWindow()
+        {
+            _menuDropAlignmentField = typeof(SystemParameters).GetField("_menuDropAlignment", BindingFlags.NonPublic | BindingFlags.Static);
+            System.Diagnostics.Debug.Assert(_menuDropAlignmentField != null);
+
+            EnsureStandardPopupAlignment();
+            SystemParameters.StaticPropertyChanged += SystemParameters_StaticPropertyChanged;
+        }
+
+        private static void SystemParameters_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            EnsureStandardPopupAlignment();
+        }
+
+        private static void EnsureStandardPopupAlignment()
+        {
+            if (SystemParameters.MenuDropAlignment && _menuDropAlignmentField != null)
+            {
+                _menuDropAlignmentField.SetValue(null, false);
+            }
+        }
+
         private async void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await viewModel.InitializeAsync();
-            viewModel.CurrentStatus = "Programm erfolgreich gestartet";
+            viewModel.CurrentStatus = "Bereit";
         }
 
         private async void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -302,7 +327,7 @@ namespace OneSignControll
 
         private void CmdStartProgram_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
-            if (viewModel != null && ProgramListView != null && ProgramListView.SelectedItems.Count == 1)
+            if (viewModel != null && ProgramListView != null && ProgramListView.SelectedItems.Count > 0)
             {
                 e.CanExecute = true;
             }
